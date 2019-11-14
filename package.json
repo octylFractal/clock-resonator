@@ -1,0 +1,44 @@
+{
+  "name": "clock-resonator",
+  "version": "1.0.0",
+  "description": "Repeating Event Tracker",
+  "private": true,
+  "sideEffects": false,
+  "browserslist": [
+    "defaults"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/octylFractal/clock-resonator.git"
+  },
+  "author": "Octavia Togami",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/octylFractal/clock-resonator/issues"
+  },
+  "homepage": "https://github.com/octylFractal/clock-resonator#readme",
+  "devDependencies": {
+    "@babel/core": "^7.7.2",
+    "@babel/plugin-transform-runtime": "^7.6.2",
+    "@babel/preset-env": "^7.7.1",
+    "@babel/preset-typescript": "^7.7.2",
+    "babel-loader": "^8.0.6",
+    "clean-webpack-plugin": "^3.0.0",
+    "html-webpack-plugin": "^3.2.0",
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.7.2",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.9.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.7.2",
+    "@types/jquery": "^3.3.31",
+    "jquery": "^3.4.1"
+  }
+}
