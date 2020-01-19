@@ -3,7 +3,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import utc from "dayjs/plugin/utc";
 import React, {useMemo, useState} from "react";
 import {hot} from "react-hot-loader/root";
-import {Form, FormFeedback, FormGroup, Input, InputGroup, Label} from "reactstrap";
+import {Form, FormFeedback, FormGroup, FormText, Input, Label} from "reactstrap";
 import {RRule} from "rrule";
 import {computeInterval} from "../../data/interval";
 
@@ -15,13 +15,14 @@ interface IntervalErrorResult {
     nextError?: string
 }
 
-type IntervalResult = RRule | IntervalErrorResult;
+type IntervalResult = RRule[] | IntervalErrorResult;
 
 const AddNewEntry: React.FC = () => {
     const [name, setName] = useState<string>("");
     const now = dayjs().startOf("day");
     const [startDate, setStartDate] = useState<string>("");
     const [nextDate, setNextDate] = useState<string>("");
+    const [selectedInterval, selectInterval] = useState<number>(0);
     const interval: IntervalResult = useMemo(() => {
         if (startDate === "" || nextDate === "") {
             return {};
@@ -58,8 +59,8 @@ const AddNewEntry: React.FC = () => {
                        min={dayjs().format("YYYY-MM-DD")}
                        max={nextDate !== "" ? nextDate : undefined}
                        onChange={e => setStartDate(e.target.value)}
-                       invalid={!(interval instanceof RRule) && !!interval.startError}/>
-                <FormFeedback>{interval instanceof RRule ? "" : interval.startError}</FormFeedback>
+                       invalid={"startError" in interval && !!interval.startError}/>
+                <FormFeedback>{"startError" in interval ? interval.startError : ""}</FormFeedback>
             </FormGroup>
             <FormGroup>
                 <Label for="ane-next-date">Next Date</Label>
@@ -67,16 +68,26 @@ const AddNewEntry: React.FC = () => {
                        value={nextDate}
                        min={startDate !== "" ? startDate : dayjs().format("YYYY-MM-DD")}
                        onChange={e => setNextDate(e.target.value)}
-                       invalid={!(interval instanceof RRule) && !!interval.nextError}/>
-                <FormFeedback>{interval instanceof RRule ? "" : interval.nextError}</FormFeedback>
+                       invalid={"nextError" in interval && !!interval.nextError}/>
+                <FormFeedback>{"nextError" in interval ? interval.nextError : ""}</FormFeedback>
             </FormGroup>
-            <FormGroup>
-                <Label for="ane-interval">Interval</Label>
-                <InputGroup>
-                    <Input type="text" readOnly value={
-                        interval instanceof RRule ? interval.toText() : ""
-                    }/>
-                </InputGroup>
+            <FormGroup tag="fieldset">
+                <Label>Interval</Label>
+                {Array.isArray(interval)
+                    ? interval.map((elem, index) =>
+                        <FormGroup check>
+                            <Label check>
+                                <Input type="radio" name="interval"
+                                       value={index} checked={index == selectedInterval}
+                                       key={elem.toString()}/>
+                                {elem.toText()}
+                            </Label>
+                        </FormGroup>)
+                    :
+                    <FormText>
+                        Please enter dates above first.
+                    </FormText>
+                }
             </FormGroup>
         </Form>
     </div>;

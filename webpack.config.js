@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const process = require('process');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
@@ -7,7 +8,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
-const HashedModuleIdsPlugin = require('webpack/lib/HashedModuleIdsPlugin');
+const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const merge = require("webpack-merge");
 
 const commonConfig = {
@@ -25,6 +26,7 @@ const commonConfig = {
         new ForkTsCheckerWebpackPlugin({
             silent: true
         }),
+        new ProgressPlugin({}),
     ],
     module: {
         rules: [
@@ -46,6 +48,9 @@ const commonConfig = {
     output: {
         path: path.resolve(__dirname, 'dist'),
     },
+    stats: {
+        chunks: true,
+    },
     optimization: {
         moduleIds: "hashed",
         runtimeChunk: "single",
@@ -64,17 +69,13 @@ const modulesThatAreJustTooBig = [
 
 module.exports = (env, argv) => {
     if (typeof argv !== 'undefined' && argv['mode'] === 'production') {
+        process.env.NODE_ENV = "production";
         return merge(commonConfig, {
             plugins: [
                 new MiniCssExtractPlugin({
                     filename: '[name].css',
-                    chunkFilename: '[id].css',
+                    chunkFilename: '[id].[contenthash].css',
                     ignoreOrder: false,
-                }),
-                new HashedModuleIdsPlugin({
-                    hashFunction: 'sha256',
-                    hashDigest: 'hex',
-                    hashDigestLength: 20
                 }),
             ],
             mode: 'production',
@@ -95,7 +96,7 @@ module.exports = (env, argv) => {
                 ],
             },
             performance: {
-                assetFilter: function(filename) {
+                assetFilter: function (filename) {
                     if (modulesThatAreJustTooBig.some(name => filename.startsWith(name))) {
                         return false;
                     }
@@ -103,11 +104,29 @@ module.exports = (env, argv) => {
                 },
             },
             optimization: {
+                namedChunks: true,
+                moduleIds: 'hashed',
                 splitChunks: {
                     chunks: 'all',
-                    maxAsyncRequests: Infinity,
-                    maxInitialRequests: Infinity,
+                    maxAsyncRequests: 50,
+                    maxInitialRequests: 50,
+                    maxSize: 100_000,
                     cacheGroups: {
+                        application: {
+                            test: /[\\/]src[\\/]/,
+                            name(module) {
+                                if (module.type === "css/mini-extract") {
+                                    module = module.issuer;
+                                }
+                                const request = module.userRequest || module.request;
+                                if (request === undefined) {
+                                    console.log("Failed for ", module);
+                                    return "application";
+                                }
+                                return path.relative(__dirname, request)
+                                    .replace("/", "~");
+                            }
+                        },
                         vendor: {
                             test: /[\\/]node_modules[\\/]/,
                             name(module) {
@@ -150,7 +169,7 @@ module.exports = (env, argv) => {
         },
         output: {
             publicPath: "/",
-            filename: '[name].[hash].js',
+            filename: '[name].js',
         },
         module: {
             rules: [
@@ -167,6 +186,9 @@ module.exports = (env, argv) => {
             alias: {
                 'react-dom': '@hot-loader/react-dom',
             },
+        },
+        optimization: {
+            namedChunks: true,
         },
     });
 };
