@@ -1,7 +1,6 @@
 import {faPlus} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import React, {useState} from "react";
-import {NavLink} from "react-router-dom";
 import {Collapse, Nav, Navbar, NavbarBrand, NavbarToggler} from "reactstrap";
 import RoutedNavLink from "../compat/RoutedNavLink";
 import {LocalUserState} from "../LocalUserState";

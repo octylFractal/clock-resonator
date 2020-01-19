@@ -1,5 +1,5 @@
 import React from "react";
-import {Button, Modal, ModalBody, ModalFooter, ModalHeader, ModalProps} from "reactstrap";
+import {Button, Modal, ModalBody, ModalFooter, ModalHeader} from "reactstrap";
 import {SimpleErrorBoundary} from "./SimpleErrorBoundary";
 
 export type SimpleModalProps = React.PropsWithChildren<{

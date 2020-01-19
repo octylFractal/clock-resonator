@@ -19,7 +19,7 @@ type IntervalResult = RRule | IntervalErrorResult;
 
 const AddNewEntry: React.FC = () => {
     const [name, setName] = useState<string>("");
-    const now = dayjs().startOf('day');
+    const now = dayjs().startOf("day");
     const [startDate, setStartDate] = useState<string>("");
     const [nextDate, setNextDate] = useState<string>("");
     const interval: IntervalResult = useMemo(() => {

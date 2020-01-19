@@ -2,7 +2,6 @@ import firebase from "firebase/app";
 import "firebase/analytics";
 import "firebase/auth";
 import "firebase/firestore";
-import {runGoogleAuth} from "./auth";
 import {removeReduxInfo, setupReduxUserHooks} from "./redux-init";
 
 const firebaseConfig = {

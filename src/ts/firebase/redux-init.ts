@@ -6,7 +6,7 @@ import {firebaseApp} from "./setup";
 export function setupReduxUserHooks(user: UserInfo): () => void {
     const firestore = firebaseApp.firestore();
     store.dispatch(userInfo.login({
-        name: user.displayName || user.email || '?????',
+        name: user.displayName || user.email || "?????",
         uid: user.uid
     }));
     const unsubs: (() => void)[] = [];

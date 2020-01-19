@@ -3,15 +3,15 @@ import {Draft} from "immer";
 import {TimeCardEntry} from "../data/TimeCardEntry";
 
 const {actions: timeCardEntriesActions, reducer: timeCardEntries} = createSlice({
-    name: 'timeCardEntries',
+    name: "timeCardEntries",
     initialState: new Array<TimeCardEntry>(),
     reducers: {
         set: {
             reducer(state, action: PayloadAction<TimeCardEntry>) {
-                state.push(action.payload)
+                state.push(action.payload);
             },
             prepare(value: TimeCardEntry) {
-                return {payload: value}
+                return {payload: value};
             }
         }
     }
@@ -31,7 +31,7 @@ export interface UserInfo {
 }
 
 const {actions: userInfoActions, reducer: userInfo} = createSlice({
-    name: 'userInfo',
+    name: "userInfo",
     initialState: {
         isKnown: false
     },
@@ -41,7 +41,7 @@ const {actions: userInfoActions, reducer: userInfo} = createSlice({
                 return {isKnown: true, ...action.payload};
             },
             prepare(value: UserInfo) {
-                return {payload: value}
+                return {payload: value};
             }
         },
         logout() {

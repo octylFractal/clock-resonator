@@ -15,7 +15,7 @@ export const UserState: React.FC<{ userInfo: UserInfoRecord }> = ({userInfo: {is
             </div>
         </NavItem>;
     }
-    if (typeof name == 'undefined') {
+    if (typeof name == "undefined") {
         function signIn() {
             runGoogleAuth(firebaseApp).catch(err => console.error(err));
         }
@@ -41,5 +41,5 @@ export const UserState: React.FC<{ userInfo: UserInfoRecord }> = ({userInfo: {is
                 Sign Out
             </DropdownItem>
         </DropdownMenu>
-    </UncontrolledButtonDropdown>
+    </UncontrolledButtonDropdown>;
 };
