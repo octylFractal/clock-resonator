@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {CleanWebpackPlugin} = require('clean-webpack-plugin');
 const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin');
@@ -6,6 +7,7 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 const TerserJSPlugin = require('terser-webpack-plugin');
+const HashedModuleIdsPlugin = require('webpack/lib/HashedModuleIdsPlugin');
 const merge = require("webpack-merge");
 
 const commonConfig = {
@@ -54,6 +56,12 @@ const commonConfig = {
     },
 };
 
+// A list of modules that are larger than 244kb,
+// just on their own, and trigger asset warnings.
+const modulesThatAreJustTooBig = [
+    "@firebase/firestore"
+].map(name => `npm.${name.replace("/", "~")}`);
+
 module.exports = (env, argv) => {
     if (typeof argv !== 'undefined' && argv['mode'] === 'production') {
         return merge(commonConfig, {
@@ -62,6 +70,11 @@ module.exports = (env, argv) => {
                     filename: '[name].css',
                     chunkFilename: '[id].css',
                     ignoreOrder: false,
+                }),
+                new HashedModuleIdsPlugin({
+                    hashFunction: 'sha256',
+                    hashDigest: 'hex',
+                    hashDigestLength: 20
                 }),
             ],
             mode: 'production',
@@ -80,6 +93,51 @@ module.exports = (env, argv) => {
                         ],
                     },
                 ],
+            },
+            performance: {
+                assetFilter: function(filename) {
+                    if (modulesThatAreJustTooBig.some(name => filename.startsWith(name))) {
+                        return false;
+                    }
+                    return !(/\.(map|LICENSE)$/.test(filename));
+                },
+            },
+            optimization: {
+                splitChunks: {
+                    chunks: 'all',
+                    maxAsyncRequests: Infinity,
+                    maxInitialRequests: Infinity,
+                    cacheGroups: {
+                        vendor: {
+                            test: /[\\/]node_modules[\\/]/,
+                            name(module) {
+                                const file = module.context;
+                                let currentDir = file;
+                                while (true) {
+                                    while (!fs.existsSync(path.resolve(currentDir, 'package.json'))) {
+                                        if (currentDir.indexOf('node_modules') < 0) {
+                                            // we went too far
+                                            throw new Error(`Failed to find package.json for ${file}`);
+                                        }
+                                        currentDir = path.dirname(currentDir);
+                                    }
+                                    const pkgJson = require(path.resolve(currentDir, 'package.json'));
+                                    let packageName = pkgJson['name'];
+                                    if (!packageName) {
+                                        const requested = pkgJson['_requested'];
+                                        packageName = requested && requested['name'];
+                                    }
+                                    if (!packageName) {
+                                        currentDir = path.dirname(currentDir);
+                                        continue;
+                                    }
+
+                                    return `npm.${packageName.replace("/", "~")}`;
+                                }
+                            },
+                        },
+                    },
+                },
             },
         });
     }

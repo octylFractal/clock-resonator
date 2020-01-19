@@ -7,7 +7,7 @@
     "module": "commonjs",
     "target": "esnext",
     "jsx": "react",
-    "allowJs": true,
+    "allowJs": false,
     "sourceMap": true,
     "strict": true,
     "noImplicitReturns": true,

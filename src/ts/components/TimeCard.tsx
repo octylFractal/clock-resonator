@@ -3,7 +3,7 @@ import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import React, {useEffect, useState} from "react";
 import {Button, Card, CardBody, CardFooter, CardHeader, Progress} from "reactstrap";
 import {TimeCardEntry} from "../data/TimeCardEntry";
-import {prettyDate, prettyInterval} from "../dates";
+import {prettyDate} from "../dates";
 import {PartialProgress} from "./PartialProgress";
 
 export interface TimeCardProps {
@@ -26,7 +26,7 @@ const TimeCardText: React.FC<TimeCardProps & PercentProps> = ({entry, percentage
         <br/>
         <FontAwesomeIcon icon={faClock}/>
         {" "}
-        <strong>Interval</strong>: every {prettyInterval(entry.interval)}
+        <strong>Interval</strong>: {entry.interval.toText()}
     </div>;
 };
 

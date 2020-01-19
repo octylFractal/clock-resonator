@@ -1,9 +1,12 @@
+import dayjs, {Dayjs} from "dayjs";
+import {RRule} from "rrule";
+
 export class TimeCardEntry {
     readonly id: string;
     readonly owner: string;
     readonly name: string;
-    readonly lastCompleteTime: Date;
-    readonly interval: number;
+    readonly lastCompleteTime: Dayjs;
+    readonly interval: RRule;
 
     constructor({id, owner, name, lastCompleteTime, interval}: Pick<TimeCardEntry, keyof TimeCardEntry>) {
         this.id = id;
@@ -13,13 +16,14 @@ export class TimeCardEntry {
         this.interval = interval;
     }
 
-    get expectedCompletionTime() {
-        return new Date(this.lastCompleteTime.getTime() + this.interval);
+    get expectedCompletionTime(): Dayjs {
+        return dayjs(this.interval.after(this.lastCompleteTime.toDate()));
     }
 
     get percentComplete() {
-        const maxRange = this.interval;
-        const nowRange = Date.now() - this.lastCompleteTime.getTime();
+        const now = Date.now();
+        const maxRange = now - this.expectedCompletionTime.valueOf();
+        const nowRange = now - this.lastCompleteTime.valueOf();
         return Math.min(100, 100 * (nowRange / maxRange));
     }
 }
