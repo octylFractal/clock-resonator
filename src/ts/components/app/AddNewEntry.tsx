@@ -44,6 +44,12 @@ const AddNewEntry: React.FC = () => {
         return computeInterval(startUtc, nextUtc);
     }, [startDate, nextDate]);
 
+    if (Array.isArray(interval)) {
+        if (selectedInterval >= interval.length) {
+            selectInterval(interval.length - 1);
+        }
+    }
+
     return <div className="w-50">
         <Form>
             <FormGroup>
@@ -79,6 +85,7 @@ const AddNewEntry: React.FC = () => {
                             <Label check>
                                 <Input type="radio" name="interval"
                                        value={index} checked={index == selectedInterval}
+                                       onChange={e => e.target.checked && selectInterval(index)}
                                        key={elem.toString()}/>
                                 {elem.toText()}
                             </Label>
