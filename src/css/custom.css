@@ -1,0 +1,52 @@
+.text-check-box {
+    display: inline-flex;
+    border: 1px solid var(--primary);
+    background-color: var(--secondary);
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    margin: 0.25rem;
+}
+
+.text-check-box.round {
+    border-radius: 50%;
+}
+
+.text-check-box:hover {
+    cursor: pointer;
+    background-color: var(--primary);
+}
+
+.text-check-box.checked {
+    background-color: var(--primary);
+}
+
+.disable-all.show {
+    opacity: 1;
+}
+
+.disable-all {
+    opacity: 0.25;
+    transition: 0.25s opacity linear;
+}
+
+/* Input-suffix support */
+.input-suffix-wrapper {
+    display: inline-block;
+    position: relative;
+}
+
+.input-suffix-wrapper > .input-suffix {
+    position: absolute;
+    padding: 0.5rem;
+    top: 0;
+    right: .5em;
+    transition: all .05s ease-in-out;
+    color: var(--dark);
+}
+
+.input-suffix-wrapper:hover > .input-suffix,
+.input-suffix-wrapper:focus-within > .input-suffix {
+    right: 1.5em;
+}

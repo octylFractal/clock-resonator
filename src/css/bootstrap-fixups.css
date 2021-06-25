@@ -1,0 +1,19 @@
+.routed.nav-link {
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--primary);
+}
+
+.text-check-box-wrapper.form-control {
+    color: var(--white);
+    background: transparent;
+    height: auto;
+}
+
+.form-control.inline {
+    display: inline;
+    width: auto;
+    margin: 0 0.25em;
+    padding-top: 0;
+    padding-bottom: 0;
+}
