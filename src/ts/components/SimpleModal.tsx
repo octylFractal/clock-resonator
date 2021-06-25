@@ -1,4 +1,4 @@
-import React from "react";
+import React, {ReactNode} from "react";
 import {Button, Modal, ModalBody, ModalFooter, ModalHeader} from "reactstrap";
 import {SimpleErrorBoundary} from "./SimpleErrorBoundary";
 
@@ -8,11 +8,12 @@ export type SimpleModalProps = React.PropsWithChildren<{
     isOpen: boolean,
     closeModal: () => void,
     onSubmit: React.MouseEventHandler<HTMLElement>,
-    size?: string
+    size?: string,
+    footer?: ReactNode
 }>;
 
 export const SimpleModal: React.FC<SimpleModalProps> = (
-    {title, submitLabel, isOpen, closeModal, onSubmit, size, children}
+    {title, submitLabel, isOpen, closeModal, onSubmit, size, children, footer}
 ) => {
     return <SimpleErrorBoundary context={`a modal dialog: '${title}'`}>
         <Modal isOpen={isOpen} toggle={closeModal} backdrop='static' size={size}>
@@ -23,6 +24,7 @@ export const SimpleModal: React.FC<SimpleModalProps> = (
                 {children}
             </ModalBody>
             <ModalFooter>
+                {footer}
                 <Button color="secondary" onClick={e => {
                     e.preventDefault();
                     closeModal();

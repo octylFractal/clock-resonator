@@ -12,13 +12,13 @@ function weekday(weekdayStr: WeekdayStr, long: string): Weekday {
 }
 
 export const ORDERED_DAYS: Weekday[] = [
-    weekday("SU", "Sunday"),
     weekday("MO", "Monday"),
     weekday("TU", "Tuesday"),
     weekday("WE", "Wednesday"),
     weekday("TH", "Thursday"),
     weekday("FR", "Friday"),
     weekday("SA", "Saturday"),
+    weekday("SU", "Sunday"),
 ];
 
 export interface Month {

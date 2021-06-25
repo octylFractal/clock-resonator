@@ -1,54 +1,27 @@
 import dayjs from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import utc from "dayjs/plugin/utc";
 import React, {useMemo, useState} from "react";
 import {hot} from "react-hot-loader/root";
-import {Form, FormFeedback, FormGroup, FormText, Input, Label} from "reactstrap";
+import {Form, FormFeedback, FormGroup, Input, InputGroup, InputGroupAddon, Label} from "reactstrap";
 import {RRule} from "rrule";
-import {computeInterval} from "../../data/interval";
-
-dayjs.extend(utc);
-dayjs.extend(isSameOrAfter);
-
-interface IntervalErrorResult {
-    startError?: string
-    nextError?: string
-}
-
-type IntervalResult = RRule[] | IntervalErrorResult;
+import {IntervalInput} from "../interval/IntervalInput";
 
 const AddNewEntry: React.FC = () => {
     const [name, setName] = useState<string>("");
-    const now = dayjs().startOf("day");
-    const [startDate, setStartDate] = useState<string>("");
-    const [nextDate, setNextDate] = useState<string>("");
-    const [selectedInterval, selectInterval] = useState<number>(0);
-    const interval: IntervalResult = useMemo(() => {
-        if (startDate === "" || nextDate === "") {
-            return {};
-        }
-        const startUtc = dayjs(startDate).utc();
-        const nextUtc = dayjs(nextDate).utc();
-        if (startUtc.isSameOrAfter(nextUtc)) {
-            return {
-                startError: "Start date must be before next date",
-                nextError: "Next date must be after start date"
-            };
-        }
-        if (startUtc.isBefore(now)) {
-            return {startError: "Start date must be the same as or after today's date"};
-        }
-        if (nextUtc.isBefore(now)) {
-            return {nextError: "Next date must be the same as or after today's date"};
-        }
-        return computeInterval(startUtc, nextUtc);
-    }, [startDate, nextDate]);
+    const [date, setDate] = useState<string>("");
+    const [interval, setInterval] = useState<RRule>();
 
-    if (Array.isArray(interval)) {
-        if (selectedInterval >= interval.length) {
-            selectInterval(interval.length - 1);
+    const dateObj = useMemo(() => {
+        if (date === "") {
+            return undefined;
         }
-    }
+        return dayjs(date);
+    }, [date]);
+    const isValidInterval = useMemo(() => {
+        if (typeof interval === "undefined" || typeof dateObj === "undefined") {
+            return undefined;
+        }
+        return dateObj.isSame(interval.after(dateObj.toDate(), true), 'day')
+    }, [dateObj, interval]);
 
     return <div className="w-50">
         <Form>
@@ -59,42 +32,26 @@ const AddNewEntry: React.FC = () => {
                        onChange={e => setName(e.target.value)}/>
             </FormGroup>
             <FormGroup>
-                <Label for="ane-start-date">Start Date</Label>
-                <Input type="date" name="start-date" id="ane-start-date"
-                       value={startDate}
-                       min={dayjs().format("YYYY-MM-DD")}
-                       max={nextDate !== "" ? nextDate : undefined}
-                       onChange={e => setStartDate(e.target.value)}
-                       invalid={"startError" in interval && !!interval.startError}/>
-                <FormFeedback>{"startError" in interval ? interval.startError : ""}</FormFeedback>
+                <Label for="ane-date">Date</Label>
+                <Input type="date" name="date" id="ane-date"
+                       value={date}
+                       onChange={e => setDate(e.target.value)}/>
             </FormGroup>
             <FormGroup>
-                <Label for="ane-next-date">Next Date</Label>
-                <Input type="date" name="next-date" id="ane-next-date"
-                       value={nextDate}
-                       min={startDate !== "" ? startDate : dayjs().format("YYYY-MM-DD")}
-                       onChange={e => setNextDate(e.target.value)}
-                       invalid={"nextError" in interval && !!interval.nextError}/>
-                <FormFeedback>{"nextError" in interval ? interval.nextError : ""}</FormFeedback>
-            </FormGroup>
-            <FormGroup tag="fieldset">
-                <Label>Interval</Label>
-                {Array.isArray(interval)
-                    ? interval.map((elem, index) =>
-                        <FormGroup check>
-                            <Label check>
-                                <Input type="radio" name="interval"
-                                       value={index} checked={index == selectedInterval}
-                                       onChange={e => e.target.checked && selectInterval(index)}
-                                       key={elem.toString()}/>
-                                {elem.toText()}
-                            </Label>
-                        </FormGroup>)
-                    :
-                    <FormText>
-                        Please enter dates above first.
-                    </FormText>
-                }
+                <Label for="ane-interval">Interval</Label>
+                <InputGroup>
+                    <Input type="text" readOnly value={
+                        interval ? interval.toText() : ""
+                    } invalid={isValidInterval === false} valid={isValidInterval}/>
+                    <InputGroupAddon addonType="append">
+                        <IntervalInput name="interval" id="ane-interval"
+                                       color="info"
+                                       startDate={dateObj}
+                                       interval={interval}
+                                       setInterval={setInterval}/>
+                    </InputGroupAddon>
+                    <FormFeedback>The date {date} is not part of the interval!</FormFeedback>
+                </InputGroup>
             </FormGroup>
         </Form>
     </div>;
