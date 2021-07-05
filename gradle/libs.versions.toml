@@ -1,0 +1,108 @@
+[versions]
+javafx = "16"
+dagger = "2.37"
+
+[libraries.jetbrains-annotations]
+module = "org.jetbrains:annotations"
+version = "21.0.1"
+
+[libraries.checkerframework-qual]
+module = "org.checkerframework:checker-qual"
+version = "3.15.0"
+
+[libraries.dagger-core]
+module = "com.google.dagger:dagger"
+version.ref = "dagger"
+
+[libraries.dagger-compiler]
+module = "com.google.dagger:dagger-compiler"
+version.ref = "dagger"
+
+[libraries.jakarta-injectApi]
+module = "jakarta.inject:jakarta.inject-api"
+version = "1.0.3"
+
+[libraries.log4j-bom]
+module = "org.apache.logging.log4j:log4j-bom"
+version = "2.14.1"
+
+[libraries.log4j-api]
+module = "org.apache.logging.log4j:log4j-api"
+
+[libraries.log4j-core]
+module = "org.apache.logging.log4j:log4j-core"
+
+[libraries.log4j-slf4jImpl]
+module = "org.apache.logging.log4j:log4j-slf4j-impl"
+
+[libraries.guava]
+module = "com.google.guava:guava"
+version = "30.1.1-jre"
+
+[libraries.directories]
+module = "dev.dirs:directories"
+version = "26"
+
+[libraries.jackson-bom]
+module = "com.fasterxml.jackson:jackson-bom"
+version = "2.12.3"
+
+[libraries.jackson-databind]
+module = "com.fasterxml.jackson.core:jackson-databind"
+
+[libraries.jackson-datatype-jsr310]
+module = "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+
+[libraries.jackson-datatype-jdk8]
+module = "com.fasterxml.jackson.datatype:jackson-datatype-jdk8"
+
+[libraries.cronutils]
+module = "com.cronutils:cron-utils"
+version = "9.1.6-SNAPSHOT"
+
+[libraries.reactor-bom]
+module = "io.projectreactor:reactor-bom"
+version = "2020.0.8"
+
+[libraries.reactor-core]
+module = "io.projectreactor:reactor-core"
+
+[libraries.javafx-base]
+module = "org.openjfx:javafx-base"
+version.ref = "javafx"
+
+[libraries.javafx-controls]
+module = "org.openjfx:javafx-controls"
+version.ref = "javafx"
+
+[libraries.javafx-graphics]
+module = "org.openjfx:javafx-graphics"
+version.ref = "javafx"
+
+[libraries.controlsfx]
+module = "org.controlsfx:controlsfx"
+version = "11.1.0"
+
+[libraries.ikonli-bom]
+module = "org.kordamp.ikonli:ikonli-bom"
+version = "12.2.0"
+
+[libraries.ikonli-javafx]
+module = "org.kordamp.ikonli:ikonli-javafx"
+
+[libraries.ikonli-fontawesome5]
+module = "org.kordamp.ikonli:ikonli-fontawesome5-pack"
+
+[libraries.junit-bom]
+module = "org.junit:junit-bom"
+version = "5.7.2"
+
+[libraries.junit-jupiter-api]
+module = "org.junit.jupiter:junit-jupiter-api"
+
+[libraries.junit-jupiter-engine]
+module = "org.junit.jupiter:junit-jupiter-engine"
+
+[libraries.truth]
+module = "com.google.truth:truth"
+version = "1.1.3"
