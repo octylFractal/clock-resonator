@@ -1,6 +1,7 @@
 import org.cadixdev.gradle.licenser.LicenseExtension
 
 plugins {
+    id("net.researchgate.release") version "2.8.1"
     id("org.cadixdev.licenser") version "0.6.1" apply false
 }
 
