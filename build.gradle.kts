@@ -5,6 +5,10 @@ plugins {
     id("org.cadixdev.licenser") version "0.6.1" apply false
 }
 
+configure<net.researchgate.release.ReleaseExtension> {
+    buildTasks = subprojects.mapNotNull { it.tasks.findByName("build") }
+}
+
 subprojects {
     apply(plugin = "org.cadixdev.licenser")
 
