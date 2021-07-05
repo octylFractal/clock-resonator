@@ -30,7 +30,8 @@ import java.util.Optional;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "@type")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = OneTimeTaskEntry.class, name = "oneTime"),
-    @JsonSubTypes.Type(value = RepeatingTaskEntry.class, name = "repeating")
+    @JsonSubTypes.Type(value = CronTaskEntry.class, name = "cron"),
+    @JsonSubTypes.Type(value = IntervalTaskEntry.class, name = "interval")
 })
 // TODO sealed types in 17
 public interface TaskEntry {

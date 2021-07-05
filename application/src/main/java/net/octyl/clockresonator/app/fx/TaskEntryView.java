@@ -31,7 +31,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import net.octyl.clockresonator.app.event.ClockTickEvent;
 import net.octyl.clockresonator.app.model.OneTimeTaskEntry;
-import net.octyl.clockresonator.app.model.RepeatingTaskEntry;
+import net.octyl.clockresonator.app.model.CronTaskEntry;
 import net.octyl.clockresonator.app.model.TaskEntry;
 
 import javax.inject.Inject;
@@ -133,7 +133,7 @@ public class TaskEntryView {
 
     private String lastOccurrenceText(TaskEntry entry) {
         var lastText = formatInstant(entry.lastOccurrence());
-        if (entry instanceof RepeatingTaskEntry) {
+        if (entry instanceof CronTaskEntry) {
             return "Last occurrence: " + lastText;
         } else if (entry instanceof OneTimeTaskEntry) {
             return "Created at: " + lastText;
@@ -143,7 +143,7 @@ public class TaskEntryView {
 
     private String nextOccurrenceText(TaskEntry entry) {
         var nextText = formatInstant(entry.nextOccurrence());
-        if (entry instanceof RepeatingTaskEntry) {
+        if (entry instanceof CronTaskEntry) {
             return "Next due at: " + nextText;
         } else if (entry instanceof OneTimeTaskEntry) {
             return "Due at: " + nextText;

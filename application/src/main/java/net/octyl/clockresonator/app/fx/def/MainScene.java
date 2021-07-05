@@ -42,8 +42,9 @@ import javafx.scene.layout.VBox;
 import net.octyl.clockresonator.app.fx.LabeledProgressBarTableCell;
 import net.octyl.clockresonator.app.fx.TaskEntryEditor;
 import net.octyl.clockresonator.app.fx.TaskEntryView;
+import net.octyl.clockresonator.app.model.IntervalTaskEntry;
 import net.octyl.clockresonator.app.model.OneTimeTaskEntry;
-import net.octyl.clockresonator.app.model.RepeatingTaskEntry;
+import net.octyl.clockresonator.app.model.CronTaskEntry;
 import net.octyl.clockresonator.app.model.TaskEntryManager;
 import net.octyl.clockresonator.app.util.FXCollections2;
 import net.octyl.clockresonator.app.util.OS;
@@ -186,7 +187,7 @@ public class MainScene {
         @Def TableView<TaskEntryView> mainTable,
         TaskEntryManager manager
     ) {
-        var button = new Button("Complete", FontIcon.of(FontAwesomeSolid.CHECK, 16));
+        var button = new Button("Complete", FontIcon.of(FontAwesomeSolid.CALENDAR_CHECK, 16));
         button.disableProperty().bind(
             Bindings.size(mainTable.getSelectionModel().getSelectedCells()).lessThan(1)
         );
@@ -265,15 +266,17 @@ public class MainScene {
             String type;
             if (cdf.getValue().taskEntry() instanceof OneTimeTaskEntry) {
                 type = "One-Time";
-            } else if (cdf.getValue().taskEntry() instanceof RepeatingTaskEntry) {
-                type = "Repeating";
+            } else if (cdf.getValue().taskEntry() instanceof CronTaskEntry) {
+                type = "Cron-based";
+            } else if (cdf.getValue().taskEntry() instanceof IntervalTaskEntry) {
+                type = "Interval-based";
             } else {
                 type = "Unknown";
             }
 
             return Bindings.createStringBinding(() -> type);
         });
-        typeColumn.setPrefWidth(75);
+        typeColumn.setPrefWidth(100);
 
         var progressColumn = new TableColumn<TaskEntryView, Number>("Progress");
         progressColumn.setCellValueFactory(cdf -> cdf.getValue().progressProperty());

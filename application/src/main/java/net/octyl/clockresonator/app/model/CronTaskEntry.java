@@ -25,7 +25,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Optional;
 
-public record RepeatingTaskEntry(
+public record CronTaskEntry(
     String id,
     String name,
     ZoneId timeZone,
@@ -34,7 +34,7 @@ public record RepeatingTaskEntry(
     Instant lastOccurrence,
     Instant executionBase
 ) implements TaskEntry {
-    public RepeatingTaskEntry {
+    public CronTaskEntry {
         if (executionBase == null) {
             executionBase = lastOccurrence;
         }
@@ -51,7 +51,7 @@ public record RepeatingTaskEntry(
     public Optional<TaskEntry> nextTaskEntry(Instant completionTime) {
         var nextOccurrence = nextOccurrence();
         var executionBase = completionTime.isBefore(nextOccurrence) ? nextOccurrence : completionTime;
-        var next = new RepeatingTaskEntry(id, name, timeZone, cron, stopTime, completionTime, executionBase);
+        var next = new CronTaskEntry(id, name, timeZone, cron, stopTime, completionTime, executionBase);
         // If it won't happen until after we want to stop, there's no next
         if (stopTime.isPresent() && (completionTime.isAfter(stopTime.get())
             || next.nextOccurrence().isAfter(stopTime.get()))) {

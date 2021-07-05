@@ -24,7 +24,9 @@ import dagger.Module;
 import dagger.Provides;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -40,6 +42,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -47,8 +50,10 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.converter.NumberStringConverter;
+import net.octyl.clockresonator.app.model.CronTaskEntry;
+import net.octyl.clockresonator.app.model.IntervalTaskEntry;
 import net.octyl.clockresonator.app.model.OneTimeTaskEntry;
-import net.octyl.clockresonator.app.model.RepeatingTaskEntry;
 import net.octyl.clockresonator.app.model.TaskEntry;
 import net.octyl.clockresonator.app.model.TaskEntryManager;
 import net.octyl.clockresonator.app.util.CronConstants;
@@ -62,6 +67,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.Period;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -80,6 +87,20 @@ public class TaskEntryEditorScene {
     @Def("dirty")
     public static BooleanProperty dirtyProperty() {
         return new SimpleBooleanProperty(null, "dirty");
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("stopTimeOn")
+    public static BooleanProperty stopTimeOnProperty() {
+        return new SimpleBooleanProperty(null, "stopTimeOn");
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("stopTime")
+    public static ObjectProperty<LocalDate> stopTimeProperty() {
+        return new SimpleObjectProperty<>(null, "stopTime");
     }
 
     @Provides
@@ -130,12 +151,14 @@ public class TaskEntryEditorScene {
     @Def
     public static TabPane tabPane(
         @Def("dirty") BooleanProperty dirtyProperty,
-        @Def("oneTime") Tab oneTimePanel,
-        @Def("repeating") Tab repeatingPanel
+        @Def("oneTime") Tab oneTimePane,
+        @Def("cron") Tab cronPane,
+        @Def("interval") Tab intervalPane
     ) {
         var tabPane = new TabPane(
-            oneTimePanel,
-            repeatingPanel
+            oneTimePane,
+            cronPane,
+            intervalPane
         );
         tabPane.getSelectionModel().selectedItemProperty().addListener(observable ->
             dirtyProperty.set(true)
@@ -159,7 +182,7 @@ public class TaskEntryEditorScene {
     @Provides
     @TaskEntryEditorScope
     @Def("oneTime")
-    public static Tab oneTimePanel(
+    public static Tab oneTimePane(
         @Def("oneTime") DatePicker oneTimeNextOccurrence
     ) {
         var grid = new GridPane();
@@ -192,13 +215,13 @@ public class TaskEntryEditorScene {
 
     @Provides
     @TaskEntryEditorScope
-    @Def("repeating")
-    public static Tab repeatingPanel(
-        @Def("repeating") ComboBox<ZoneId> repeatingTimeZone,
-        @Def("repeating") TextField repeatingCronField,
-        @Def("repeating") Label repeatingCronDescription,
-        @Def("repeating") CheckBox repeatingStopTimeOn,
-        @Def("repeating") DatePicker repeatingStopTime
+    @Def("cron")
+    public static Tab cronPane(
+        @Def("cron") ComboBox<ZoneId> cronTimeZone,
+        @Def("cron") TextField cronCronField,
+        @Def("cron") Label cronCronDescription,
+        @Def("cron") CheckBox cronStopTimeOn,
+        @Def("cron") DatePicker cronStopTime
     ) {
         var grid = new GridPane();
 
@@ -210,43 +233,43 @@ public class TaskEntryEditorScene {
         var timeZone = new Label("Time Zone");
         timeZone.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         grid.add(timeZone, 0, row);
-        grid.add(repeatingTimeZone, 1, row);
-        GridPane.setHgrow(repeatingTimeZone, Priority.ALWAYS);
+        grid.add(cronTimeZone, 1, row);
+        GridPane.setHgrow(cronTimeZone, Priority.ALWAYS);
         row++;
 
         var cronSchedule = new Label("Cron Schedule");
         cronSchedule.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         grid.add(cronSchedule, 0, row);
-        grid.add(repeatingCronField, 1, row);
-        GridPane.setHgrow(repeatingCronField, Priority.ALWAYS);
+        grid.add(cronCronField, 1, row);
+        GridPane.setHgrow(cronCronField, Priority.ALWAYS);
         row++;
 
         var label = new Label("[Mi H DoM Mo DoW]");
         label.setTextFill(Color.GRAY);
         label.setAlignment(Pos.CENTER_RIGHT);
         grid.add(label, 0, row);
-        grid.add(repeatingCronDescription, 1, row);
+        grid.add(cronCronDescription, 1, row);
         row++;
 
-        var stopAtWithCheck = new HBox(4, repeatingStopTimeOn, new Label("Stop At"));
+        var stopAtWithCheck = new HBox(4, cronStopTimeOn, new Label("Stop At"));
         stopAtWithCheck.setAlignment(Pos.CENTER_LEFT);
         stopAtWithCheck.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         grid.add(stopAtWithCheck, 0, row);
-        grid.add(repeatingStopTime, 1, row);
-        GridPane.setHgrow(repeatingStopTime, Priority.ALWAYS);
+        grid.add(cronStopTime, 1, row);
+        GridPane.setHgrow(cronStopTime, Priority.ALWAYS);
         row++;
 
         grid.setPadding(new Insets(8));
 
-        var tab = new Tab("Repeating", grid);
-        tab.setGraphic(FontIcon.of(FontAwesomeSolid.SYNC, 16));
+        var tab = new Tab("Cron", grid);
+        tab.setGraphic(FontIcon.of(FontAwesomeSolid.CALENDAR_ALT, 16));
         return tab;
     }
 
     @Provides
     @TaskEntryEditorScope
-    @Def("repeating")
-    public static ComboBox<ZoneId> repeatingTimeZone(
+    @Def("cron")
+    public static ComboBox<ZoneId> cronTimeZone(
         @Def("dirty") BooleanProperty dirtyProperty
     ) {
         var box = new SearchableComboBox<>(
@@ -264,8 +287,8 @@ public class TaskEntryEditorScene {
 
     @Provides
     @TaskEntryEditorScope
-    @Def("repeating")
-    public static TextField repeatingCronField(
+    @Def("cron")
+    public static TextField cronCronField(
         @Def("dirty") BooleanProperty dirtyProperty
     ) {
         var field = new TextField();
@@ -276,9 +299,9 @@ public class TaskEntryEditorScene {
 
     @Provides
     @TaskEntryEditorScope
-    @Def("repeating")
-    public static Label repeatingCronDescription(
-        @Def("repeating") TextField repeatingCronField
+    @Def("cron")
+    public static Label cronCronDescription(
+        @Def("cron") TextField cronCronField
     ) {
         var label = new Label();
         label.setWrapText(true);
@@ -286,37 +309,167 @@ public class TaskEntryEditorScene {
             Bindings.createStringBinding(() -> {
                 Cron parsedCron;
                 try {
-                    parsedCron = CronConstants.PARSER.parse(repeatingCronField.getText());
+                    parsedCron = CronConstants.PARSER.parse(cronCronField.getText());
                 } catch (IllegalArgumentException e) {
                     return e.getMessage();
                 }
                 return "Occurs: " + CronConstants.DESCRIPTOR.describe(parsedCron);
-            }, repeatingCronField.textProperty())
+            }, cronCronField.textProperty())
         );
         return label;
     }
 
     @Provides
     @TaskEntryEditorScope
-    @Def("repeating")
-    public static CheckBox repeatingStopTimeOn(
-        @Def("dirty") BooleanProperty dirtyProperty
+    @Def("cron")
+    public static CheckBox cronStopTimeOn(
+        @Def("dirty") BooleanProperty dirtyProperty,
+        @Def("stopTimeOn") BooleanProperty stopTimeOnProperty
     ) {
         var checkBox = new CheckBox();
+        checkBox.selectedProperty().bindBidirectional(stopTimeOnProperty);
         checkBox.selectedProperty().addListener(observable -> dirtyProperty.set(true));
         return checkBox;
     }
 
     @Provides
     @TaskEntryEditorScope
-    @Def("repeating")
-    public static DatePicker repeatingStopTime(
+    @Def("cron")
+    public static DatePicker cronStopTime(
         @Def("dirty") BooleanProperty dirtyProperty,
-        @Def("repeating") CheckBox repeatingStopTimeOn
+        @Def("stopTimeOn") BooleanProperty stopTimeOnProperty,
+        @Def("stopTime") ObjectProperty<LocalDate> stopTimeProperty
     ) {
         var datePicker = new DatePicker();
+        datePicker.valueProperty().bindBidirectional(stopTimeProperty);
         datePicker.valueProperty().addListener(observable -> dirtyProperty.set(true));
-        datePicker.disableProperty().bind(repeatingStopTimeOn.selectedProperty().not());
+        datePicker.disableProperty().bind(stopTimeOnProperty.not());
+        datePicker.setMaxWidth(Double.POSITIVE_INFINITY);
+        return datePicker;
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("interval")
+    public static Tab intervalPane(
+        @Def("intervalYears") TextField intervalYears,
+        @Def("intervalMonths") TextField intervalMonths,
+        @Def("intervalDays") TextField intervalDays,
+        @Def("interval") CheckBox intervalStopTimeOn,
+        @Def("interval") DatePicker intervalStopTime
+    ) {
+        var grid = new GridPane();
+
+        grid.setVgap(8);
+        grid.setHgap(8);
+
+        int row = 0;
+
+        var intervalDuration = new HBox(4, intervalYears, intervalMonths, intervalDays);
+        var cronSchedule = new Label("Interval [Y/M/D]");
+        cronSchedule.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        grid.add(cronSchedule, 0, row);
+        grid.add(intervalDuration, 1, row);
+        GridPane.setHgrow(intervalDuration, Priority.ALWAYS);
+        row++;
+
+        var stopAtWithCheck = new HBox(4, intervalStopTimeOn, new Label("Stop At"));
+        stopAtWithCheck.setAlignment(Pos.CENTER_LEFT);
+        stopAtWithCheck.setMinSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+        grid.add(stopAtWithCheck, 0, row);
+        grid.add(intervalStopTime, 1, row);
+        GridPane.setHgrow(intervalStopTime, Priority.ALWAYS);
+        row++;
+
+        grid.setPadding(new Insets(8));
+
+        var tab = new Tab("Interval", grid);
+        tab.setGraphic(FontIcon.of(FontAwesomeSolid.SYNC, 16));
+        return tab;
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("intervalYears")
+    public static TextField intervalYears(
+        @Def("dirty") BooleanProperty dirtyProperty
+    ) {
+        var field = new TextField();
+        field.textProperty().addListener(observable -> dirtyProperty.set(true));
+        field.setTextFormatter(new TextFormatter<>(new NumberStringConverter(), null, change -> {
+            // Reject non-numerical additions
+            if (change.isAdded() && !change.getText().matches("[0-9]*")) {
+                return null;
+            }
+            return change;
+        }));
+        field.setPromptText("Years");
+        return field;
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("intervalMonths")
+    public static TextField intervalMonths(
+        @Def("dirty") BooleanProperty dirtyProperty
+    ) {
+        var field = new TextField();
+        field.textProperty().addListener(observable -> dirtyProperty.set(true));
+        field.setTextFormatter(new TextFormatter<>(new NumberStringConverter(), null, change -> {
+            // Reject non-numerical additions
+            if (change.isAdded() && !change.getText().matches("[0-9]*")) {
+                return null;
+            }
+            return change;
+        }));
+        field.setPromptText("Months");
+        return field;
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("intervalDays")
+    public static TextField intervalDays(
+        @Def("dirty") BooleanProperty dirtyProperty
+    ) {
+        var field = new TextField();
+        field.textProperty().addListener(observable -> dirtyProperty.set(true));
+        field.setTextFormatter(new TextFormatter<>(new NumberStringConverter(), null, change -> {
+            // Reject non-numerical additions
+            if (change.isAdded() && !change.getText().matches("[0-9]*")) {
+                return null;
+            }
+            return change;
+        }));
+        field.setPromptText("Days");
+        return field;
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("interval")
+    public static CheckBox intervalStopTimeOn(
+        @Def("dirty") BooleanProperty dirtyProperty,
+        @Def("stopTimeOn") BooleanProperty stopTimeOnProperty
+    ) {
+        var checkBox = new CheckBox();
+        checkBox.selectedProperty().bindBidirectional(stopTimeOnProperty);
+        checkBox.selectedProperty().addListener(observable -> dirtyProperty.set(true));
+        return checkBox;
+    }
+
+    @Provides
+    @TaskEntryEditorScope
+    @Def("interval")
+    public static DatePicker intervalStopTime(
+        @Def("dirty") BooleanProperty dirtyProperty,
+        @Def("stopTimeOn") BooleanProperty stopTimeOnProperty,
+        @Def("stopTime") ObjectProperty<LocalDate> stopTimeProperty
+    ) {
+        var datePicker = new DatePicker();
+        datePicker.valueProperty().bindBidirectional(stopTimeProperty);
+        datePicker.valueProperty().addListener(observable -> dirtyProperty.set(true));
+        datePicker.disableProperty().bind(stopTimeOnProperty.not());
         datePicker.setMaxWidth(Double.POSITIVE_INFINITY);
         return datePicker;
     }
@@ -351,25 +504,35 @@ public class TaskEntryEditorScene {
         @Def Stage stage,
         @Def("dirty") BooleanProperty dirtyProperty,
         @Def("done") Runnable doneFunction,
+        @Def TabPane tabPane,
+        @Def("cron") Tab cronPane,
+        @Def("interval") Tab intervalPane,
         @Def("name") TextField nameField,
-        @Def("repeating") TextField repeatingCronField
+        @Def("cron") TextField cronCronField,
+        @Def("intervalYears") TextField intervalYears,
+        @Def("intervalMonths") TextField intervalMonths,
+        @Def("intervalDays") TextField intervalDays
     ) {
         // Responsible for creating the new entry and closing the dialog
         var btn = new Button("Done");
+        var isCronPane = tabPane.getSelectionModel().selectedItemProperty().isEqualTo(cronPane);
+        var isIntervalPane = tabPane.getSelectionModel().selectedItemProperty().isEqualTo(intervalPane);
+        var cronInvalid = Bindings.createBooleanBinding(() -> {
+            try {
+                CronConstants.PARSER.parse(cronCronField.getText());
+                return false;
+            } catch (IllegalArgumentException e) {
+                return true;
+            }
+        }, cronCronField.textProperty());
+        var intervalInvalid = intervalYears.textProperty().isEmpty()
+            .or(intervalMonths.textProperty().isEmpty())
+            .or(intervalDays.textProperty().isEmpty());
         btn.disableProperty().bind(
-            // Disable if: not dirty
             dirtyProperty.not()
-                // or no name
                 .or(nameField.textProperty().isEmpty())
-                // or cron invalid
-                .or(Bindings.createBooleanBinding(() -> {
-                    try {
-                        CronConstants.PARSER.parse(repeatingCronField.getText());
-                        return false;
-                    } catch (IllegalArgumentException e) {
-                        return true;
-                    }
-                }, repeatingCronField.textProperty()))
+                .or(isCronPane.and(cronInvalid))
+                .or(isIntervalPane.and(intervalInvalid))
         );
         btn.setOnAction(event -> {
             doneFunction.run();
@@ -410,13 +573,17 @@ public class TaskEntryEditorScene {
         @Def("dirty") BooleanProperty dirtyProperty,
         @Def TabPane tabPane,
         @Def("oneTime") Tab oneTimePane,
-        @Def("repeating") Tab repeatingPane,
+        @Def("cron") Tab cronPane,
+        @Def("interval") Tab intervalPane,
         @Def("name") TextField nameField,
         @Def("oneTime") DatePicker oneTimeNextOccurrence,
-        @Def("repeating") ComboBox<ZoneId> repeatingTimeZone,
-        @Def("repeating") TextField repeatingCronField,
-        @Def("repeating") CheckBox repeatingStopTimeOn,
-        @Def("repeating") DatePicker repeatingStopTime
+        @Def("cron") ComboBox<ZoneId> cronTimeZone,
+        @Def("cron") TextField cronCronField,
+        @Def("intervalYears") TextField intervalYears,
+        @Def("intervalMonths") TextField intervalMonths,
+        @Def("intervalDays") TextField intervalDays,
+        @Def("stopTimeOn") BooleanProperty stopTimeOnProperty,
+        @Def("stopTime") ObjectProperty<LocalDate> stopTimeProperty
     ) {
         return () -> {
             nameField.setText(initialTaskEntry.name());
@@ -426,17 +593,27 @@ public class TaskEntryEditorScene {
                     ? Instant.now()
                     : initialTaskEntry.nextOccurrence()).atZone(ZoneId.systemDefault()).toLocalDate()
             );
-            if (initialTaskEntry instanceof RepeatingTaskEntry repeatingTaskEntry) {
-                tabPane.getSelectionModel().select(repeatingPane);
-                repeatingTimeZone.setValue(repeatingTaskEntry.timeZone());
-                repeatingCronField.setText(repeatingTaskEntry.cron().asString());
-                repeatingStopTimeOn.setSelected(repeatingTaskEntry.stopTime().isPresent());
-                repeatingTaskEntry.stopTime().ifPresent(stopTime ->
-                    repeatingStopTime.setValue(stopTime.atZone(repeatingTaskEntry.timeZone()).toLocalDate())
-                );
-            } else {
+
+            if (initialTaskEntry instanceof OneTimeTaskEntry) {
                 tabPane.getSelectionModel().select(oneTimePane);
-                repeatingTimeZone.setValue(ZoneId.systemDefault());
+                cronTimeZone.setValue(ZoneId.systemDefault());
+            } else if (initialTaskEntry instanceof CronTaskEntry cronTaskEntry) {
+                tabPane.getSelectionModel().select(cronPane);
+                cronTimeZone.setValue(cronTaskEntry.timeZone());
+                cronCronField.setText(cronTaskEntry.cron().asString());
+                stopTimeOnProperty.set(cronTaskEntry.stopTime().isPresent());
+                cronTaskEntry.stopTime().ifPresent(stopTime ->
+                    stopTimeProperty.setValue(stopTime.atZone(cronTaskEntry.timeZone()).toLocalDate())
+                );
+            } else if (initialTaskEntry instanceof IntervalTaskEntry intervalTaskEntry) {
+                tabPane.getSelectionModel().select(intervalPane);
+                intervalYears.setText(String.valueOf(intervalTaskEntry.interval().getYears()));
+                intervalMonths.setText(String.valueOf(intervalTaskEntry.interval().getMonths()));
+                intervalDays.setText(String.valueOf(intervalTaskEntry.interval().getDays()));
+                stopTimeOnProperty.set(intervalTaskEntry.stopTime().isPresent());
+                intervalTaskEntry.stopTime().ifPresent(stopTime ->
+                    stopTimeProperty.setValue(stopTime.atZone(ZoneId.systemDefault()).toLocalDate())
+                );
             }
             dirtyProperty.set(false);
         };
@@ -450,13 +627,17 @@ public class TaskEntryEditorScene {
         TaskEntry initialTaskEntry,
         @Def TabPane tabPane,
         @Def("oneTime") Tab oneTimePane,
-        @Def("repeating") Tab repeatingPane,
+        @Def("cron") Tab cronPane,
+        @Def("interval") Tab intervalPane,
         @Def("name") TextField nameField,
         @Def("oneTime") DatePicker oneTimeNextOccurrence,
-        @Def("repeating") ComboBox<ZoneId> repeatingTimeZone,
-        @Def("repeating") TextField repeatingCronField,
-        @Def("repeating") CheckBox repeatingStopTimeOn,
-        @Def("repeating") DatePicker repeatingStopTime
+        @Def("cron") ComboBox<ZoneId> cronTimeZone,
+        @Def("cron") TextField cronCronField,
+        @Def("intervalYears") TextField intervalYears,
+        @Def("intervalMonths") TextField intervalMonths,
+        @Def("intervalDays") TextField intervalDays,
+        @Def("stopTimeOn") BooleanProperty stopTimeOnProperty,
+        @Def("stopTime") ObjectProperty<LocalDate> stopTimeProperty
     ) {
         return () -> {
             TaskEntry newTaskEntry;
@@ -471,25 +652,42 @@ public class TaskEntryEditorScene {
                     lastOccurrence,
                     oneTimeNextOccurrence.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()
                 );
-            } else if (selectedItem == repeatingPane) {
-                Cron cron = CronConstants.PARSER.parse(repeatingCronField.getText());
-                var timeZone = repeatingTimeZone.getValue();
+            } else if (selectedItem == cronPane) {
+                Cron cron = CronConstants.PARSER.parse(cronCronField.getText());
+                var timeZone = cronTimeZone.getValue();
                 var lastExecTime = ExecutionTime.forCron(cron).lastExecution(ZonedDateTime.now(timeZone))
                     .orElseThrow(() -> new IllegalStateException("Failed to find last occurrence"))
                     .toInstant();
-                newTaskEntry = new RepeatingTaskEntry(
+                newTaskEntry = new CronTaskEntry(
                     initialTaskEntry.id(),
                     nameField.getText(),
                     timeZone,
                     cron,
-                    repeatingStopTimeOn.isSelected()
-                        ? Optional.of(repeatingStopTime.getValue().atStartOfDay(timeZone).toInstant())
+                    stopTimeOnProperty.get()
+                        ? Optional.of(stopTimeProperty.get().atStartOfDay(timeZone).toInstant())
                         : Optional.empty(),
                     lastExecTime,
                     lastExecTime
                 );
+            } else if (selectedItem == intervalPane) {
+                var timeZone = cronTimeZone.getValue();
+                var now = Instant.now();
+                newTaskEntry = new IntervalTaskEntry(
+                    initialTaskEntry.id(),
+                    nameField.getText(),
+                    Period.of(
+                        Integer.parseInt(intervalYears.getText()),
+                        Integer.parseInt(intervalMonths.getText()),
+                        Integer.parseInt(intervalDays.getText())
+                    ),
+                    stopTimeOnProperty.get()
+                        ? Optional.of(stopTimeProperty.get().atStartOfDay(timeZone).toInstant())
+                        : Optional.empty(),
+                    now,
+                    now
+                );
             } else {
-                throw new IllegalStateException("Only two tabs should be present, got " + selectedItem);
+                throw new IllegalStateException("Only three tabs should be present, got " + selectedItem);
             }
             taskEntryManager.put(newTaskEntry);
         };
