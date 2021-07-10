@@ -683,7 +683,6 @@ public class TaskEntryEditorScene {
                     stopTimeOnProperty.get()
                         ? Optional.of(stopTimeProperty.get().atStartOfDay(timeZone).toInstant())
                         : Optional.empty(),
-                    now,
                     now
                 );
             } else {

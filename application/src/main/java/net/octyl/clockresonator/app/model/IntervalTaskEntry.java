@@ -28,27 +28,17 @@ public record IntervalTaskEntry(
     String name,
     Period interval,
     Optional<Instant> stopTime,
-    Instant lastOccurrence,
-    Instant executionBase
+    Instant lastOccurrence
 ) implements TaskEntry {
-    public IntervalTaskEntry {
-        interval = interval.normalized();
-        if (executionBase == null) {
-            executionBase = lastOccurrence;
-        }
-    }
-
     @Override
     public Instant nextOccurrence() {
-        return executionBase.atZone(ZoneId.systemDefault()).plus(interval).toInstant();
+        return lastOccurrence.atZone(ZoneId.systemDefault()).plus(interval).toInstant();
     }
 
     @Override
     public Optional<TaskEntry> nextTaskEntry(Instant completionTime) {
-        var nextOccurrence = nextOccurrence();
-        var executionBase = completionTime.isBefore(nextOccurrence) ? nextOccurrence : completionTime;
         var next = new IntervalTaskEntry(
-            id, name, interval, stopTime, completionTime, executionBase
+            id, name, interval, stopTime, completionTime
         );
         // If it won't happen until after we want to stop, there's no next
         if (stopTime.isPresent() && (completionTime.isAfter(stopTime.get())
